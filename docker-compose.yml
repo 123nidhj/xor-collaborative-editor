@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # MongoDB persistent database
+  mongo:
+    image: mongo:7.0
+    container_name: xor-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: xor_collab
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - xor-network
+
+  # Node.js + Express + Socket.io backend service
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: xor-backend
+    restart: always
+    ports:
+      - "5001:5001"
+    environment:
+      PORT: 5001
+      MONGODB_URI: mongodb://mongo:27017/xor_collab
+      JWT_SECRET: super_secret_xor_collab_key_2026
+      CLIENT_URL: http://localhost:3000
+    depends_on:
+      - mongo
+    networks:
+      - xor-network
+
+  # React + Vite frontend served via Nginx with WebSocket reverse proxy
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: xor-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - xor-network
+
+volumes:
+  mongo_data:
+
+networks:
+  xor-network:
+    driver: bridge
