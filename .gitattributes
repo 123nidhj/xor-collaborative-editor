@@ -1,0 +1,9 @@
+# Language overrides for GitHub Linguist
+*.jsx linguist-language=JavaScript
+*.js linguist-language=JavaScript
+*.py linguist-language=Python
+*.cpp linguist-language=C++
+*.html linguist-language=HTML
+*.css linguist-language=CSS
+*.sh linguist-language=Shell
+*.sql linguist-language=SQL

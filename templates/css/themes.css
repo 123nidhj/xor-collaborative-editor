@@ -1,0 +1,49 @@
+/**
+ * XOR Collaborative Editor — Multi-Theme CSS Stylesheet
+ * Custom color palettes for editor syntax highlighting & room themes.
+ */
+
+:root {
+  /* Pastel Pink Palette */
+  --xor-pink-bg: #fff0f4;
+  --xor-pink-subtle: #fdf2f8;
+  --xor-pink-border: #fbcfe8;
+  --xor-pink-primary: #ec4899;
+  --xor-pink-hover: #db2777;
+  --xor-pink-maroon: #4a0e2a;
+
+  /* Code Syntax Tokens */
+  --xor-code-keyword: #be185d;
+  --xor-code-string: #047857;
+  --xor-code-function: #6d28d9;
+  --xor-code-number: #b45309;
+  --xor-code-comment: #9ca3af;
+  --xor-code-variable: #374151;
+}
+
+/* Rounded Friendly Wordmark */
+.font-wordmark {
+  font-family: 'Poppins', 'Nunito', -apple-system, sans-serif;
+  color: var(--xor-pink-maroon);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+/* Editor Scrollbar */
+.xor-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.xor-scrollbar::-webkit-scrollbar-track {
+  background: var(--xor-pink-subtle);
+}
+
+.xor-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--xor-pink-border);
+  border-radius: 4px;
+}
+
+.xor-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--xor-pink-primary);
+}
