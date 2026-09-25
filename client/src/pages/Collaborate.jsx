@@ -123,7 +123,7 @@ export const Collaborate = () => {
               <div className="mt-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] flex items-start gap-1.5 leading-snug">
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
                 <span>
-                  <strong>Tip:</strong> Short IDs like <code>{roomId}</code> can be guessed by other students! Use <strong>Generate Unique</strong> or set a secret PIN below.
+                  <strong>Tip:</strong> Short IDs like <code>{roomId}</code> can be guessed by other students! Click <strong>+ Generate Unique</strong> for a private room.
                 </span>
               </div>
             )}
@@ -140,30 +140,7 @@ export const Collaborate = () => {
             />
           </div>
 
-          {/* Optional Room PIN / Passcode */}
-          <div className="pt-1">
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-pink-900 font-mono flex items-center gap-1">
-                <Shield className="w-3.5 h-3.5 text-pink-500" />
-                Room PIN (Optional)
-              </label>
-              <span className="text-[10px] text-pink-600 font-medium">Keeps other groups out</span>
-            </div>
-            <div className="relative">
-              <input
-                type="password"
-                maxLength={8}
-                placeholder="e.g. 1234 (Only shared with your group)"
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                className="w-full px-3.5 py-2.5 pl-9 rounded-xl border border-pink-200 bg-pink-50/40 text-sm text-pink-950 placeholder:text-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400 font-mono tracking-wider"
-              />
-              <Lock className="w-3.5 h-3.5 text-pink-400 absolute left-3 top-3.5 pointer-events-none" />
-            </div>
-            <p className="text-[10px] text-pink-600 mt-1">
-              If set, anyone without this PIN is rejected from entering.
-            </p>
-          </div>
+
 
           <button
             type="submit"

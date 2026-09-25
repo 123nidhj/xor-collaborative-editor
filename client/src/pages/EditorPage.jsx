@@ -495,46 +495,7 @@ export const EditorPage = () => {
         </div>
       )}
 
-      {/* MODAL: Incorrect or Missing Passcode PIN 🔑 */}
-      {isPasscodeRequired && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <form
-            onSubmit={handleRetryPasscode}
-            className="w-full max-w-sm bg-white rounded-3xl p-6 text-center border border-pink-200 shadow-2xl space-y-4"
-          >
-            <div className="w-12 h-12 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center mx-auto mb-2">
-              <KeyRound className="w-6 h-6" />
-            </div>
-            <h2 className="text-lg font-extrabold text-pink-950">Room PIN Required 🔑</h2>
-            <p className="text-xs text-pink-700 leading-relaxed">
-              This room is password-protected by the creator. Enter the secret PIN to join:
-            </p>
-            <input
-              type="password"
-              placeholder="Enter Room PIN"
-              maxLength={8}
-              value={pinPrompt}
-              onChange={(e) => setPinPrompt(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-center tracking-widest rounded-xl border border-pink-200 bg-pink-50 text-sm font-mono text-pink-950 focus:outline-none focus:ring-2 focus:ring-pink-400"
-            />
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => navigate('/Collaborate')}
-                className="flex-1 py-2 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-800 font-bold text-xs border border-pink-200"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex-1 py-2 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-bold text-xs shadow-md shadow-pink-200"
-              >
-                Unlock & Join
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+
 
       {/* Floating Status Notification Toast */}
       {toastMessage && (
