@@ -10,19 +10,66 @@ import {
   ArrowLeft,
   Terminal,
   Sparkles,
-  Wifi,
-  WifiOff,
-  LogOut,
+  Lock,
+  Unlock,
+  ShieldAlert,
   Play,
-  RotateCcw,
+  LogOut,
+  KeyRound,
 } from 'lucide-react';
 
 const LANGUAGE_TEMPLATES = {
-  javascript: `// XOR Collaborative JavaScript Session\n// Room: Real-time code synchronization active\n\nfunction calculateXOR(a, b) {\n  console.log(\`Bitwise XOR of \${a} and \${b} is: \${a ^ b}\`);\n  return a ^ b;\n}\n\ncalculateXOR(42, 137);\n`,
-  python: `# XOR Collaborative Python Session\n\ndef calculate_xor(a: int, b: int) -> int:\n    result = a ^ b\n    print(f"XOR Result: {result}")\n    return result\n\nif __name__ == "__main__":\n    calculate_xor(42, 137)\n`,
-  cpp: `// XOR Collaborative C++ Session\n#include <iostream>\n\nint main() {\n    int a = 42, b = 137;\n    std::cout << "Bitwise XOR: " << (a ^ b) << std::endl;\n    return 0;\n}\n`,
-  html: `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>XOR Real-Time Collaborative Canvas</title>\n  <style>\n    body { font-family: monospace; background: #0a0a0a; color: #fff; padding: 2rem; }\n  </style>\n</head>\n<body>\n  <h1>Welcome to &lt;XOR/&gt; Collaborative Editor</h1>\n</body>\n</html>\n`,
-  markdown: `# XOR Collaborative Notes\n\n## Session Overview\n- Real-time WebSockets synchronization\n- Connected peers actively editing\n\n### Tasks\n- [x] Configure Socket.io rooms\n- [x] Implement live cursor tracking\n- [ ] Deploy containerized backend services\n`,
+  javascript: `// XOR Collaborative JavaScript Session 🌸
+// Real-time synchronization active across all peers
+
+function calculateXOR(a, b) {
+  const result = a ^ b;
+  console.log(\`Bitwise XOR of \${a} and \${b} is: \${result}\`);
+  return result;
+}
+
+calculateXOR(42, 137);
+`,
+  python: `# XOR Collaborative Python Session 🌸
+
+def calculate_xor(a: int, b: int) -> int:
+    result = a ^ b
+    print(f"XOR Result: {result}")
+    return result
+
+if __name__ == "__main__":
+    calculate_xor(42, 137)
+`,
+  cpp: `// XOR Collaborative C++ Session 🌸
+#include <iostream>
+
+int main() {
+    int a = 42, b = 137;
+    std::cout << "Bitwise XOR: " << (a ^ b) << std::endl;
+    return 0;
+}
+`,
+  html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>XOR Real-Time Collaborative Canvas</title>
+  <style>
+    body { font-family: monospace; background: #fff0f4; color: #831843; padding: 2rem; }
+  </style>
+</head>
+<body>
+  <h1>Welcome to &lt;XOR/&gt; Collaborative Editor 🌸</h1>
+</body>
+</html>
+`,
+  markdown: `# XOR Collaborative Notes 🌸
+
+## Session Overview
+- Real-time WebSockets synchronization
+- Connected peers actively editing
+- Private group room protection active
+`,
 };
 
 export const EditorPage = () => {
@@ -31,55 +78,62 @@ export const EditorPage = () => {
   const location = useLocation();
   const { socket, isConnected } = useSocket();
 
-  // Username from state or localStorage
   const username =
     location.state?.username ||
     localStorage.getItem('xor_username') ||
     `Developer_${Math.floor(Math.random() * 1000)}`;
+
+  const initialPasscode = location.state?.passcode || '';
 
   const [content, setContent] = useState(LANGUAGE_TEMPLATES.javascript);
   const [language, setLanguage] = useState('javascript');
   const [collaborators, setCollaborators] = useState([]);
   const [remoteCursors, setRemoteCursors] = useState({});
   const [copiedRoom, setCopiedRoom] = useState(false);
-  const [saveStatus, setSaveStatus] = useState('saved'); // 'saved', 'saving'
+  const [saveStatus, setSaveStatus] = useState('saved');
   const [toastMessage, setToastMessage] = useState(null);
   const [consoleOutput, setConsoleOutput] = useState('');
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
+
+  // Security features: Lock Room & Passcode
+  const [isRoomLocked, setIsRoomLocked] = useState(false);
+  const [isPasscodeRequired, setIsPasscodeRequired] = useState(false);
+  const [pinPrompt, setPinPrompt] = useState(initialPasscode);
+  const [isBlockedLocked, setIsBlockedLocked] = useState(false);
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // 1. Socket Lifecycle: Join Room & Listen for Collaborators
+  // Socket Lifecycle & Room Security Events
   useEffect(() => {
     if (!socket || !roomId) return;
 
-    // Join room event with user credentials
-    socket.emit('join-document', roomId, { username });
+    // Join room with username and passcode
+    socket.emit('join-document', roomId, {
+      username,
+      passcode: initialPasscode,
+    });
 
-    // Initial code hydration from room state
     const handleLoadDocument = (data) => {
       if (data && data.content !== undefined) {
         setContent(data.content || LANGUAGE_TEMPLATES[language]);
         if (data.language) setLanguage(data.language);
+        if (data.isLocked !== undefined) setIsRoomLocked(data.isLocked);
       }
     };
 
-    // Live collaborator roster
     const handleRoomCollaborators = (users) => {
       setCollaborators(users || []);
     };
 
-    // Peer joined
     const handleUserJoined = (u) => {
-      showToast(`${u.name || 'A teammate'} joined room`);
+      showToast(`${u.name || 'Teammate'} joined room 🌸`);
     };
 
-    // Peer left
     const handleUserLeft = (u) => {
-      showToast(`${u.name || 'A collaborator'} left`);
+      showToast(`${u.name || 'A teammate'} left`);
       setRemoteCursors((prev) => {
         const next = { ...prev };
         delete next[u.socketId];
@@ -87,12 +141,10 @@ export const EditorPage = () => {
       });
     };
 
-    // Live code change broadcast from peers
     const handleReceiveChanges = ({ content: incomingContent }) => {
       setContent(incomingContent);
     };
 
-    // Remote cursor updates
     const handleCursorUpdate = (cursorData) => {
       setRemoteCursors((prev) => ({
         ...prev,
@@ -100,9 +152,22 @@ export const EditorPage = () => {
       }));
     };
 
-    // Save status
     const handleSaveStatus = ({ status }) => {
       setSaveStatus(status);
+    };
+
+    // Room Lock & Security Events
+    const handleRoomLockChanged = ({ isLocked }) => {
+      setIsRoomLocked(isLocked);
+      showToast(isLocked ? '🔒 Room is now LOCKED to outsiders' : '🔓 Room is now UNLOCKED');
+    };
+
+    const handleRoomLocked = () => {
+      setIsBlockedLocked(true);
+    };
+
+    const handleInvalidPasscode = () => {
+      setIsPasscodeRequired(true);
     };
 
     socket.on('load-document', handleLoadDocument);
@@ -112,6 +177,9 @@ export const EditorPage = () => {
     socket.on('receive-changes', handleReceiveChanges);
     socket.on('cursor-update', handleCursorUpdate);
     socket.on('save-status', handleSaveStatus);
+    socket.on('room-lock-changed', handleRoomLockChanged);
+    socket.on('room-locked', handleRoomLocked);
+    socket.on('invalid-passcode', handleInvalidPasscode);
 
     return () => {
       socket.emit('leave-document', roomId);
@@ -122,8 +190,11 @@ export const EditorPage = () => {
       socket.off('receive-changes', handleReceiveChanges);
       socket.off('cursor-update', handleCursorUpdate);
       socket.off('save-status', handleSaveStatus);
+      socket.off('room-lock-changed', handleRoomLockChanged);
+      socket.off('room-locked', handleRoomLocked);
+      socket.off('invalid-passcode', handleInvalidPasscode);
     };
-  }, [socket, roomId, username]);
+  }, [socket, roomId, username, initialPasscode]);
 
   // Handle local text changes
   const handleContentChange = (newContent) => {
@@ -150,11 +221,33 @@ export const EditorPage = () => {
     }
   };
 
+  // Toggle Room Lock feature 🔒
+  const handleToggleLock = () => {
+    if (socket) {
+      socket.emit('toggle-lock-room', {
+        documentId: roomId,
+      });
+    }
+  };
+
+  // Submit Room PIN modal
+  const handleRetryPasscode = (e) => {
+    e.preventDefault();
+    if (!pinPrompt.trim()) return;
+    setIsPasscodeRequired(false);
+    if (socket) {
+      socket.emit('join-document', roomId, {
+        username,
+        passcode: pinPrompt.trim(),
+      });
+    }
+  };
+
   // Copy Room ID to clipboard
   const handleCopyRoomId = () => {
     navigator.clipboard.writeText(roomId);
     setCopiedRoom(true);
-    showToast('Room ID copied to clipboard!');
+    showToast('Room ID copied to clipboard! 📋');
     setTimeout(() => setCopiedRoom(false), 2000);
   };
 
@@ -186,7 +279,7 @@ export const EditorPage = () => {
     link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
-    showToast(`Downloaded ${filename}`);
+    showToast(`Downloaded ${filename} 🌸`);
   };
 
   // Run code simulation / evaluation (for JavaScript)
@@ -199,7 +292,6 @@ export const EditorPage = () => {
         console.log = (...args) => {
           logs.push(args.map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' '));
         };
-        // Safely evaluate simple functions/logs
         const runFn = new Function(content);
         runFn();
         setConsoleOutput(logs.join('\n') || 'Program executed successfully with no stdout output.');
@@ -210,41 +302,44 @@ export const EditorPage = () => {
       }
     } else {
       setConsoleOutput(
-        `[${language.toUpperCase()} Runner]\nCode synchronized across ${collaborators.length} active peers.\nBackend execution sandbox container ready.`
+        `[${language.toUpperCase()} Runner]\nCode synchronized across ${collaborators.length || 1} active peers in real-time.`
       );
     }
   };
 
   return (
-    <div className="h-screen bg-black text-white flex flex-col overflow-hidden font-sans selection:bg-brand-cyan/30">
+    <div className="h-screen bg-[#fdf2f8] text-pink-950 flex flex-col overflow-hidden font-sans">
       {/* Top Navigation Bar */}
-      <header className="h-14 border-b border-white/10 bg-[#080808] px-4 flex items-center justify-between select-none shrink-0 z-30">
+      <header className="h-14 border-b border-pink-200/90 bg-white px-4 flex items-center justify-between select-none shrink-0 z-30 shadow-sm shadow-pink-100/50">
         {/* Left: <XOR/> Monospace Logo & Room Badge */}
         <div className="flex items-center gap-3">
           <Link
             to="/Collaborate"
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+            className="p-1.5 rounded-xl text-pink-600 hover:text-pink-950 hover:bg-pink-50 transition-colors"
             title="Leave room and return to Lobby"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
 
-          <Link to="/" className="font-mono font-bold text-sm tracking-wider text-white flex items-center gap-1">
-            &lt;<span className="text-white">XOR</span>/&gt;
+          <Link to="/" className="flex items-center gap-1.5 select-none group">
+            <span className="w-2.5 h-2.5 rounded-full bg-pink-500 shadow-sm shadow-pink-300"></span>
+            <span className="font-wordmark text-lg font-extrabold tracking-tight text-[#4A0E2A] group-hover:opacity-90 transition-opacity">
+              XOR
+            </span>
           </Link>
 
           {/* Room ID Pill with Click to Copy */}
           <button
             onClick={handleCopyRoomId}
             title="Click to copy Room ID"
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-white/10 hover:border-white/30 text-xs font-mono text-zinc-300 transition-all group"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-200 hover:border-pink-300 text-xs font-mono text-pink-900 transition-all group"
           >
-            <span className="text-zinc-500">Room:</span>
-            <span className="text-white font-medium">{roomId}</span>
+            <span className="text-pink-400 font-bold">Room:</span>
+            <span className="text-pink-950 font-bold">{roomId}</span>
             {copiedRoom ? (
-              <Check className="w-3.5 h-3.5 text-emerald-400 ml-0.5" />
+              <Check className="w-3.5 h-3.5 text-pink-600 ml-0.5" />
             ) : (
-              <Copy className="w-3.5 h-3.5 text-zinc-500 group-hover:text-white ml-0.5" />
+              <Copy className="w-3.5 h-3.5 text-pink-400 group-hover:text-pink-600 ml-0.5" />
             )}
           </button>
         </div>
@@ -254,7 +349,7 @@ export const EditorPage = () => {
           <select
             value={language}
             onChange={handleLanguageChange}
-            className="bg-zinc-900 border border-white/10 text-xs text-zinc-300 rounded-lg px-2.5 py-1 font-mono focus:outline-none focus:border-white/30"
+            className="bg-pink-50/70 border border-pink-200 text-xs font-bold text-pink-900 rounded-xl px-2.5 py-1 font-mono focus:outline-none focus:ring-2 focus:ring-pink-300"
           >
             <option value="javascript">JavaScript (.js)</option>
             <option value="python">Python (.py)</option>
@@ -264,38 +359,52 @@ export const EditorPage = () => {
           </select>
 
           {/* Save Status */}
-          <div className="flex items-center gap-1.5 text-xs font-mono text-zinc-400">
+          <div className="flex items-center gap-1.5 text-xs font-mono">
             {saveStatus === 'saving' ? (
-              <span className="text-amber-400 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span className="text-amber-600 flex items-center gap-1 font-medium">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                 Syncing...
               </span>
             ) : (
-              <span className="text-emerald-400 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-pink-600 flex items-center gap-1 font-medium">
+                <span className="w-2 h-2 rounded-full bg-pink-500" />
                 Saved
               </span>
             )}
           </div>
         </div>
 
-        {/* Right: Active Participants & Actions */}
+        {/* Right: Security Lock, Active Participants & Actions */}
         <div className="flex items-center gap-2.5">
+          {/* Room Lock Button (Guarantees no outside groups can enter!) */}
+          <button
+            onClick={handleToggleLock}
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all border ${
+              isRoomLocked
+                ? 'bg-rose-500 text-white border-rose-600 shadow-sm shadow-rose-200'
+                : 'bg-pink-100 hover:bg-pink-200 text-pink-800 border-pink-300'
+            }`}
+            title={isRoomLocked ? 'Room is LOCKED to outside people. Click to unlock.' : 'Click to lock this room from strangers'}
+          >
+            {isRoomLocked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3 text-pink-600" />}
+            <span className="text-[11px]">{isRoomLocked ? 'Locked 🔒' : 'Lock Room 🔓'}</span>
+          </button>
+
           {/* Active Participants Avatars */}
-          <div className="flex items-center gap-1.5 pl-2 border-l border-white/10">
+          <div className="flex items-center gap-1.5 pl-2 border-l border-pink-200">
             <div className="flex items-center -space-x-1.5">
               {collaborators.map((c, i) => (
                 <div
                   key={c.socketId || i}
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-black border-2 border-black shadow-sm"
-                  style={{ backgroundColor: c.avatarColor || '#06b6d4' }}
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-extrabold text-white border-2 border-white shadow-sm"
+                  style={{ backgroundColor: c.avatarColor || '#f472b6' }}
                   title={`${c.name || 'User'} (Connected)`}
                 >
                   {(c.name || 'U').charAt(0).toUpperCase()}
                 </div>
               ))}
             </div>
-            <span className="text-[11px] font-mono text-zinc-400 hidden sm:inline">
+            <span className="text-[11px] font-mono font-bold text-pink-700 hidden sm:inline">
               {collaborators.length || 1} online
             </span>
           </div>
@@ -303,7 +412,7 @@ export const EditorPage = () => {
           {/* Run Code Button */}
           <button
             onClick={handleRunCode}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium transition-all"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-pink-500 hover:bg-pink-600 text-white text-xs font-bold transition-all shadow-sm shadow-pink-200"
             title="Execute Code"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
@@ -313,7 +422,7 @@ export const EditorPage = () => {
           {/* Export Code File */}
           <button
             onClick={handleExport}
-            className="p-1.5 rounded-lg bg-zinc-900 border border-white/10 text-zinc-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-xl bg-pink-50 border border-pink-200 text-pink-700 hover:bg-pink-100 transition-colors"
             title="Download Code File"
           >
             <Download className="w-4 h-4" />
@@ -322,7 +431,7 @@ export const EditorPage = () => {
           {/* Leave Room Button */}
           <Link
             to="/Collaborate"
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-zinc-900 border border-white/10 text-xs font-medium text-zinc-400 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-pink-50 border border-pink-200 text-xs font-bold text-pink-800 hover:bg-pink-100 transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Leave</span>
@@ -345,31 +454,93 @@ export const EditorPage = () => {
 
         {/* Console / Output Drawer */}
         {isConsoleOpen && (
-          <div className="h-44 md:h-full md:w-80 border-t md:border-t-0 md:border-l border-white/10 bg-[#080808] flex flex-col shrink-0">
-            <div className="h-9 px-3 border-b border-white/10 flex items-center justify-between text-xs font-mono text-zinc-400 select-none">
-              <span className="flex items-center gap-1.5 text-zinc-200">
-                <Terminal className="w-3.5 h-3.5 text-brand-cyan" />
+          <div className="h-44 md:h-full md:w-80 border-t md:border-t-0 md:border-l border-pink-200/90 bg-white flex flex-col shrink-0 shadow-lg">
+            <div className="h-9 px-3 border-b border-pink-100 flex items-center justify-between text-xs font-mono text-pink-700 select-none bg-pink-50/50">
+              <span className="flex items-center gap-1.5 text-pink-950 font-bold">
+                <Terminal className="w-3.5 h-3.5 text-pink-500" />
                 Console Output
               </span>
               <button
                 onClick={() => setIsConsoleOpen(false)}
-                className="text-zinc-500 hover:text-white text-xs"
+                className="text-pink-400 hover:text-pink-800 text-xs font-bold"
               >
                 ✕
               </button>
             </div>
-            <pre className="flex-1 p-3 text-xs font-mono text-zinc-300 overflow-auto whitespace-pre-wrap selection:bg-brand-cyan/30">
+            <pre className="flex-1 p-3 text-xs font-mono text-pink-950 overflow-auto whitespace-pre-wrap selection:bg-pink-200">
               {consoleOutput || 'Click "Run" to execute current script...'}
             </pre>
           </div>
         )}
       </main>
 
+      {/* MODAL: Room Locked by Host ⛔ */}
+      {isBlockedLocked && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 text-center border border-rose-200 shadow-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
+              <ShieldAlert className="w-6 h-6" />
+            </div>
+            <h2 className="text-lg font-extrabold text-pink-950 mb-1">Room Locked by Host 🔒</h2>
+            <p className="text-xs text-pink-700 mb-5 leading-relaxed">
+              This room has been locked to prevent outsiders from joining. Please ask your group member to click <strong>"Lock Room"</strong> in the top bar to unlock it.
+            </p>
+            <button
+              onClick={() => navigate('/Collaborate')}
+              className="w-full py-2.5 px-4 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-bold text-xs shadow-md shadow-pink-200"
+            >
+              Back to Room Lobby
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Incorrect or Missing Passcode PIN 🔑 */}
+      {isPasscodeRequired && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={handleRetryPasscode}
+            className="w-full max-w-sm bg-white rounded-3xl p-6 text-center border border-pink-200 shadow-2xl space-y-4"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center mx-auto mb-2">
+              <KeyRound className="w-6 h-6" />
+            </div>
+            <h2 className="text-lg font-extrabold text-pink-950">Room PIN Required 🔑</h2>
+            <p className="text-xs text-pink-700 leading-relaxed">
+              This room is password-protected by the creator. Enter the secret PIN to join:
+            </p>
+            <input
+              type="password"
+              placeholder="Enter Room PIN"
+              maxLength={8}
+              value={pinPrompt}
+              onChange={(e) => setPinPrompt(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-center tracking-widest rounded-xl border border-pink-200 bg-pink-50 text-sm font-mono text-pink-950 focus:outline-none focus:ring-2 focus:ring-pink-400"
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => navigate('/Collaborate')}
+                className="flex-1 py-2 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-800 font-bold text-xs border border-pink-200"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex-1 py-2 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-bold text-xs shadow-md shadow-pink-200"
+              >
+                Unlock & Join
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Floating Status Notification Toast */}
       {toastMessage && (
         <div className="absolute bottom-5 right-5 z-50 animate-in slide-in-from-bottom-2 duration-150 pointer-events-none">
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-zinc-900 border border-white/20 text-xs font-mono text-white shadow-xl">
-            <Sparkles className="w-3.5 h-3.5 text-brand-cyan" />
+          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-pink-200 text-xs font-mono text-pink-950 shadow-lg shadow-pink-100">
+            <Sparkles className="w-3.5 h-3.5 text-pink-500" />
             <span>{toastMessage}</span>
           </div>
         </div>

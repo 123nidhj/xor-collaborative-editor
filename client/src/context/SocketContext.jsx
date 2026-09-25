@@ -1,19 +1,21 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
-import { useAuth } from './AuthContext';
 
 const SocketContext = createContext(null);
 
 export const SocketProvider = ({ children }) => {
-  const { token, user } = useAuth();
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Connect to backend (proxied or direct)
-    const newSocket = io({
-      path: '/socket.io',
-      auth: { token },
+    // In dev, connect to localhost:5001 or fallback to relative window.location
+    const backendUrl =
+      window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5001'
+        : window.location.origin;
+
+    const newSocket = io(backendUrl, {
+      transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
@@ -30,7 +32,7 @@ export const SocketProvider = ({ children }) => {
     });
 
     newSocket.on('connect_error', (err) => {
-      console.warn('[Socket] Connection error:', err.message);
+      console.warn('[Socket] Connection warning:', err.message);
     });
 
     setSocket(newSocket);
@@ -38,7 +40,7 @@ export const SocketProvider = ({ children }) => {
     return () => {
       newSocket.disconnect();
     };
-  }, [token]);
+  }, []);
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>

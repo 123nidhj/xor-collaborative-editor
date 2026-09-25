@@ -1,21 +1,10 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 
 export const NeonWave = () => {
   return (
-    <div className="w-full max-w-2xl relative flex flex-col items-center justify-center my-3 select-none">
-      {/* Button directly above the wave */}
-      <div className="relative z-20 mb-1">
-        <Link
-          to="/Collaborate"
-          className="inline-flex items-center px-7 py-3 rounded-full bg-pink-500 hover:bg-pink-600 text-white text-xs sm:text-sm font-bold shadow-lg shadow-pink-300/60 hover:shadow-xl hover:scale-105 transition-all duration-150 border border-pink-400"
-        >
-          Start Collaborating ✨
-        </Link>
-      </div>
-
+    <div className="w-full max-w-2xl relative flex flex-col items-center justify-center my-1 select-none">
       {/* SVG Neon Wave in Baby Pink Palette */}
-      <div className="w-full h-32 sm:h-40 overflow-visible pointer-events-none relative flex items-center justify-center">
+      <div className="w-full h-32 sm:h-36 overflow-visible pointer-events-none relative flex items-center justify-center">
         <svg
           className="w-full h-full animate-wave"
           viewBox="0 0 800 140"

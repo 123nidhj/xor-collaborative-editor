@@ -3,18 +3,22 @@ import { Link } from 'react-router-dom';
 
 export const Navbar = () => {
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/70 backdrop-blur-md border-b border-pink-200/70 transition-all">
+    <header className="sticky top-0 z-50 w-full bg-white/75 backdrop-blur-md border-b border-pink-200/70 transition-all">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-1 group font-mono font-bold text-base sm:text-lg tracking-wider text-pink-900">
-          <span className="text-pink-500 font-extrabold">&lt;</span>XOR<span className="text-pink-500 font-extrabold">/&gt;</span>
+        {/* Rounded Friendly Wordmark in dark maroon #4A0E2A */}
+        <Link to="/" className="flex items-center gap-2 group select-none">
+          <span className="w-3 h-3 rounded-full bg-pink-500 shadow-sm shadow-pink-300"></span>
+          <span className="font-wordmark text-2xl font-extrabold tracking-tight text-[#4A0E2A] group-hover:opacity-90 transition-opacity">
+            XOR
+          </span>
         </Link>
 
-        <div>
+        <div className="flex items-center gap-3">
           <Link
             to="/Collaborate"
-            className="px-5 py-2 rounded-full text-xs sm:text-sm font-semibold text-pink-700 bg-pink-100/90 hover:bg-pink-200 border border-pink-300 transition-all shadow-sm shadow-pink-100"
+            className="px-5 py-2 rounded-full text-xs sm:text-sm font-bold text-white bg-pink-500 hover:bg-pink-600 transition-all shadow-sm shadow-pink-200"
           >
-            Get Started
+            Open a Room
           </Link>
         </div>
       </div>

@@ -13,17 +13,18 @@ export function App() {
       <AuthProvider>
         <SocketProvider>
           <Routes>
-            {/* Landing page matching Screenshot 2 */}
+            {/* Landing page in Baby Pink */}
             <Route path="/" element={<LandingPage />} />
 
-            {/* Room Join / Generate matching Screenshot 1 */}
+            {/* Room Lobby & Generator in Baby Pink */}
             <Route path="/Collaborate" element={<Collaborate />} />
             <Route path="/collaborate" element={<Navigate to="/Collaborate" replace />} />
 
-            {/* Live Collaborative Editor Room */}
+            {/* Live Collaborative Editor Room with Lock & PIN */}
             <Route path="/editor/:roomId" element={<EditorPage />} />
 
-            {/* Catch-all redirect to Home */}
+            {/* Redirects */}
+            <Route path="/dashboard" element={<Navigate to="/Collaborate" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </SocketProvider>
